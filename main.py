@@ -5,6 +5,7 @@ import time
 
 import requests
 import tomllib
+from PIL import Image, ImageDraw, ImageFont
 
 STRAVA_TOKEN_URL = "https://www.strava.com/api/v3/oauth/token"
 ACTIVITIES_URL = "https://www.strava.com/api/v3/athlete/activities"
@@ -58,6 +59,34 @@ def check_refresh_token(creds_data: dict, token_data: dict) -> dict:
         return token_data
 
 
+def image_from_activity_data(
+    activity_data: list[dict], max_activities: int, result_file
+) -> None:
+    """create an image from the activity data and then write it out to an image"""
+    shape = (800, 480)
+    w, h = shape
+    image = Image.new("RGB", shape, color=(45, 27, 89))
+    activities = activity_data[:max_activities]
+    box_shape = w, (h / len(activities))
+    context = ImageDraw.Draw(image)
+    font = ImageFont.truetype("MesloLGS NF Regular.ttf", size=18)
+    for idx, act in enumerate(activities):
+        context.rectangle((0, idx * box_shape[1], w, idx * box_shape[1]))
+        context.text(
+            (10, idx * box_shape[1]),
+            f"{idx+1}: {act['name']}: {act['start_date_local']} -> {act['elapsed_time']} seconds",
+            font=font,
+            fill=(255, 255, 0, 255),
+        )
+        context.text(
+            (10, 20 + idx * box_shape[1]),
+            f"Distance: {act['distance']}m, Heart Rate: {act['average_heartrate']}",
+            font=font,
+        )
+
+    image.save(result_file, format="jpeg")
+
+
 def main():
     parser = argparse.ArgumentParser(
         "strava-visualizer",
@@ -88,6 +117,11 @@ def main():
         default="",
         help="handle to output file to write JSON to",
     )
+    parser.add_argument(
+        "-f", "--file_type", required=False, default="json", choices=["json", "image"]
+    )
+    parser.add_argument("-ma", "--max_activities", required=False, default=5, type=int)
+
     args = parser.parse_args()
     creds_data = load_credentials(args.creds)
     try:
@@ -115,7 +149,13 @@ def main():
     else:
         result_file = sys.stdout
 
-    print(json.dumps(list(activity_data), sort_keys=True), file=result_file)
+    activity_data = list(activity_data)
+
+    match args.file_type:
+        case "json":
+            print(json.dumps(activity_data, sort_keys=True), file=result_file)
+        case "image":
+            image_from_activity_data(activity_data, args.max_activities, result_file)
 
 
 if __name__ == "__main__":
