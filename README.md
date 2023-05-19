@@ -36,7 +36,8 @@ The script will use the tokens in `tokens.json` to auth or re-authenticate itsel
 ## Shell Args
 
 ```shell
-usage: strava-visualizer [-h] [-c CREDS] [-t {Walk,Run,All}] [-m {0,1}] [-o OUTPUT]
+❯ python3 main.py -h
+usage: strava-visualizer [-h] [-c CREDS] [-t {Walk,Run,All}] [-m {0,1}] [-o OUTPUT] [-f {json,image}] [-ma MAX_ACTIVITIES]
 
 Get last activities from strava and make a cool image!
 
@@ -49,4 +50,6 @@ options:
                         include map key in output JSON
   -o OUTPUT, --output OUTPUT
                         handle to output file to write JSON to
+  -f {json,image}, --file_type {json,image}
+  -ma MAX_ACTIVITIES, --max_activities MAX_ACTIVITIES
 ```
