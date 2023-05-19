@@ -2,6 +2,12 @@
 
 Retrieve activity data from Strava!
 
+## Installation
+
+```shell
+pip install -e .
+```
+
 ## Authentication to Strava API
 
 1. A `credentials.toml` file that contains your Strava API client ID/secret as well as authorization code if running for the first time:
