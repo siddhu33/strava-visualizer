@@ -104,7 +104,9 @@ def image_from_activity_data(
     content = ImageFont.truetype("Futura", size=12)
     text_color = auto_text_color(primary=primary)
     for idx, act in enumerate(activities):
-        context.rectangle((0, idx * box_shape[1], w / 2, idx * box_shape[1]))
+        context.rectangle(
+            (0, idx * box_shape[1], w / 2, idx * box_shape[1]), outline=primary
+        )
         run_date_str = datetime.fromisoformat(act["start_date_local"]).strftime(
             "%Y-%m-%d %H:%M:%S"
         )
