@@ -1,11 +1,13 @@
 # strava-visualizer
 
-Retrieve activity data from Strava!
+Retrieve activity data from Strava and visualize it to an image!
+
+![img](example.jpg)
 
 ## Installation
 
 ```shell
-pip install -e .
+python3 -m pip install -e '[.dev]'
 ```
 
 ## Authentication to Strava API
@@ -37,7 +39,8 @@ The script will use the tokens in `tokens.json` to auth or re-authenticate itsel
 
 ```shell
 ❯ python3 main.py -h
-usage: strava-visualizer [-h] [-c CREDS] [-t {Walk,Run,All}] [-m {0,1}] [-o OUTPUT] [-f {json,image}] [-ma MAX_ACTIVITIES]
+usage: strava-visualizer [-h] [-c CREDS] [-t {Walk,Run,All}] [-m {0,1}] [-o OUTPUT] [-iw WIDTH] [-ih HEIGHT] [-f {json,image}] [-ma MAX_ACTIVITIES] [-p PRIMARY_COLOR]
+                         [-s SECONDARY_COLOR]
 
 Get last activities from strava and make a cool image!
 
@@ -49,7 +52,13 @@ options:
   -m {0,1}, --map {0,1}
                         include map key in output JSON
   -o OUTPUT, --output OUTPUT
-                        handle to output file to write JSON to
+                        handle to output file to write JSON or image to
+  -iw WIDTH, --width WIDTH
+                        If writing image, the width of the image being written
+  -ih HEIGHT, --height HEIGHT
+                        If writing image, the width of the image being written
   -f {json,image}, --file_type {json,image}
   -ma MAX_ACTIVITIES, --max_activities MAX_ACTIVITIES
+  -p PRIMARY_COLOR, --primary-color PRIMARY_COLOR
+  -s SECONDARY_COLOR, --secondary-color SECONDARY_COLOR
 ```
