@@ -8,11 +8,10 @@ from humanize import precisedelta
 
 matplotlib.use("Agg")
 matplotlib.rcParams["font.family"] = ["Futura"]
-matplotlib.rcParams["text.color"] = "#ffff00"
 
 import matplotlib.pyplot as plt
 import requests
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFont, ImageColor
 
 from auth import get_strava_token
 
@@ -36,15 +35,16 @@ def heart_rate_chart(
     w, h = chart_shape
     fig = plt.figure(figsize=(w / 100.0, h / 100.0), dpi=100.0)
     ax = fig.subplots(1, 1)
-    ax.set_title("Average Heart Rate")
+    ax.set_title("Average Heart Rate", fontdict={"color": colors[1]})
     plot_chart_data(dates, rates, fig, ax, colors)
-    return _figure_to_image(fig)
+    return _figure_to_image(fig, colors[1])
 
 
-def _figure_to_image(fig):
-    fig.autofmt_xdate()
-    fig.tight_layout()
-    fig.canvas.draw()
+def _figure_to_image(fig, text_color):
+    with plt.rc_context({"text.color": text_color}):
+        fig.autofmt_xdate()
+        fig.tight_layout()
+        fig.canvas.draw()
     return Image.frombytes(
         "RGB", fig.canvas.get_width_height(), fig.canvas.tostring_rgb()
     )
@@ -71,12 +71,18 @@ def pace_chart(
     fig = plt.figure(figsize=(w / 100.0, h / 100.0), dpi=100.0)
     ax = fig.subplots(1, 1)
     plot_chart_data(dates, paces, fig, ax, colors)
-    ax.set_title("Running Pace")
-    return _figure_to_image(fig)
+    ax.set_title("Running Pace", fontdict={"color": colors[1]})
+    return _figure_to_image(fig, colors[1])
 
 
 def _elapsed_str(num_seconds: int):
     return precisedelta(timedelta(seconds=num_seconds))
+
+
+def auto_text_color(primary):
+    r, g, b = ImageColor.getrgb(primary)
+    a = 1 - (0.299 * r + 0.587 * g + 0.114 * b) / 255
+    return "#000000" if (a < 0.5) else "#ffffff"
 
 
 def image_from_activity_data(
@@ -96,7 +102,7 @@ def image_from_activity_data(
     heading = ImageFont.truetype("Futura", size=16)
     subheading = ImageFont.truetype("Futura", size=14)
     content = ImageFont.truetype("Futura", size=12)
-
+    text_color = auto_text_color(primary=primary)
     for idx, act in enumerate(activities):
         context.rectangle((0, idx * box_shape[1], w / 2, idx * box_shape[1]))
         run_date_str = datetime.fromisoformat(act["start_date_local"]).strftime(
@@ -113,11 +119,13 @@ def image_from_activity_data(
             (10, 20 + idx * box_shape[1]),
             f"Elapsed Time: {_elapsed_str(act['elapsed_time'])}",
             font=subheading,
+            fill=text_color,
         )
         context.text(
             (10, 40 + idx * box_shape[1]),
             f"Distance: {act['distance']}m, Heart Rate: {act['average_heartrate']}, Pace: {pace_str}",
             font=content,
+            fill=text_color,
         )
     num_charts = 2
     chart_shape = (w / 2, h / num_charts)
