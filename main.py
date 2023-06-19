@@ -1,46 +1,22 @@
 import argparse
 import json
 import sys
-import time
+from datetime import datetime, timedelta
 
+import matplotlib
+from humanize import precisedelta
+
+matplotlib.use("Agg")
+matplotlib.rcParams["font.family"] = ["Futura"]
+matplotlib.rcParams["text.color"] = "#ffff00"
+
+import matplotlib.pyplot as plt
 import requests
-import tomllib
 from PIL import Image, ImageDraw, ImageFont
 
-STRAVA_TOKEN_URL = "https://www.strava.com/api/v3/oauth/token"
+from auth import get_strava_token
+
 ACTIVITIES_URL = "https://www.strava.com/api/v3/athlete/activities"
-TOKENS_PATH = "tokens.json"
-
-
-def load_credentials(creds: str) -> dict:
-    with open(creds, "rb") as in_file:
-        return tomllib.load(in_file)
-
-
-def get_access_token(creds_data: dict):
-    headers = {"Content-Type": "application/json"}
-    body = dict(grant_type="authorization_code", **creds_data["strava"])
-    res = requests.post(STRAVA_TOKEN_URL, json=body, headers=headers)
-    res.raise_for_status()
-    return res.json()
-
-
-def refresh_access_token(creds_data: dict, refresh_token: str) -> dict:
-    strava_data = creds_data["strava"]
-    res = requests.post(
-        STRAVA_TOKEN_URL,
-        json={
-            "client_id": strava_data["client_id"],
-            "client_secret": strava_data["client_secret"],
-            "grant_type": "refresh_token",
-            "refresh_token": refresh_token,
-        },
-    )
-    res.raise_for_status()
-    new_token_data = res.json()
-    with open(TOKENS_PATH, "w") as out_file:
-        json.dump(new_token_data, out_file, sort_keys=True)
-    return new_token_data
 
 
 def get_activities(token_data: dict) -> list[dict]:
@@ -50,41 +26,128 @@ def get_activities(token_data: dict) -> list[dict]:
     return res.json()
 
 
-def check_refresh_token(creds_data: dict, token_data: dict) -> dict:
-    if time.time() > token_data["expires_at"]:
-        print("Token expired! Using refresh token to get new one!", file=sys.stderr)
-        return refresh_access_token(creds_data, token_data["refresh_token"])
-    else:
-        print("Token is still valid, so using this one!", file=sys.stderr)
-        return token_data
+def heart_rate_chart(
+    activity_data: list[dict], chart_shape: tuple[int, int], colors: tuple[str, str]
+):
+    dates, rates = [], []
+    for a in activity_data:
+        dates.append(datetime.fromisoformat(a["start_date"]))
+        rates.append(a["average_heartrate"])
+    w, h = chart_shape
+    fig = plt.figure(figsize=(w / 100.0, h / 100.0), dpi=100.0)
+    ax = fig.subplots(1, 1)
+    ax.set_title("Average Heart Rate")
+    plot_chart_data(dates, rates, fig, ax, colors)
+    return _figure_to_image(fig)
+
+
+def _figure_to_image(fig):
+    fig.autofmt_xdate()
+    fig.tight_layout()
+    fig.canvas.draw()
+    return Image.frombytes(
+        "RGB", fig.canvas.get_width_height(), fig.canvas.tostring_rgb()
+    )
+
+
+def plot_chart_data(x, y, fig, ax, colors):
+    primary, secondary = colors
+    fig.set_facecolor(primary)
+    ax.set_facecolor(primary)
+    ax.xaxis.label.set_color(secondary)
+    ax.yaxis.label.set_color(secondary)
+    ax.tick_params(colors=secondary, which="both")
+    ax.plot(x, y, color=secondary)
+
+
+def pace_chart(
+    activity_data: list[dict], chart_shape: tuple[int, int], colors: tuple[str, str]
+):
+    dates, paces = [], []
+    for a in activity_data:
+        dates.append(datetime.fromisoformat(a["start_date"]))
+        paces.append(a["average_speed"] * 3.6)
+    w, h = chart_shape
+    fig = plt.figure(figsize=(w / 100.0, h / 100.0), dpi=100.0)
+    ax = fig.subplots(1, 1)
+    plot_chart_data(dates, paces, fig, ax, colors)
+    ax.set_title("Running Pace")
+    return _figure_to_image(fig)
+
+
+def _elapsed_str(num_seconds: int):
+    return precisedelta(timedelta(seconds=num_seconds))
 
 
 def image_from_activity_data(
-    activity_data: list[dict], max_activities: int, result_file
+    activity_data: list[dict],
+    max_activities: int,
+    result_file,
+    shape: tuple[int, int],
+    colors: tuple[str, str],
 ) -> None:
     """create an image from the activity data and then write it out to an image"""
-    shape = (800, 480)
+    primary, secondary = colors
     w, h = shape
-    image = Image.new("RGB", shape, color=(45, 27, 89))
+    image = Image.new("RGB", shape, color=primary)
     activities = activity_data[:max_activities]
-    box_shape = w, (h / len(activities))
+    box_shape = w / 2, (h / len(activities))
     context = ImageDraw.Draw(image)
-    font = ImageFont.truetype("MesloLGS NF Regular.ttf", size=18)
+    heading = ImageFont.truetype("Futura", size=16)
+    subheading = ImageFont.truetype("Futura", size=14)
+    content = ImageFont.truetype("Futura", size=12)
+
     for idx, act in enumerate(activities):
-        context.rectangle((0, idx * box_shape[1], w, idx * box_shape[1]))
+        context.rectangle((0, idx * box_shape[1], w / 2, idx * box_shape[1]))
+        run_date_str = datetime.fromisoformat(act["start_date_local"]).strftime(
+            "%Y-%m-%d %H:%M:%S"
+        )
+        pace_str = f"{act['average_speed']*3.6:.2f}km/h"
         context.text(
             (10, idx * box_shape[1]),
-            f"{idx+1}: {act['name']}: {act['start_date_local']} -> {act['elapsed_time']} seconds",
-            font=font,
-            fill=(255, 255, 0, 255),
+            f"{act['name']}: {run_date_str}",
+            font=heading,
+            fill=secondary,
         )
         context.text(
             (10, 20 + idx * box_shape[1]),
-            f"Distance: {act['distance']}m, Heart Rate: {act['average_heartrate']}",
-            font=font,
+            f"Elapsed Time: {_elapsed_str(act['elapsed_time'])}",
+            font=subheading,
         )
+        context.text(
+            (10, 40 + idx * box_shape[1]),
+            f"Distance: {act['distance']}m, Heart Rate: {act['average_heartrate']}, Pace: {pace_str}",
+            font=content,
+        )
+    num_charts = 2
+    chart_shape = (w / 2, h / num_charts)
+    chart_data = []  # two charts, heart rate and distance
+    chart_data.append(heart_rate_chart(activity_data, chart_shape, colors))
+    chart_data.append(pace_chart(activity_data, chart_shape, colors))
+    for idx in range(num_charts):
+        context.rectangle(
+            (w / 2, idx * (h / num_charts), w, idx * (h / num_charts)), outline="red"
+        )
+        box = (w / 2, idx * chart_shape[1])
+        box = [int(i) for i in box]
+        image.paste(chart_data[idx], box=box)
 
     image.save(result_file, format="jpeg")
+
+
+def get_activity_data(args, token_data):
+    activity_data = get_activities(token_data)
+
+    if args.type != "All":
+        activity_data = (a for a in activity_data if a["type"] == args.type)
+
+    if args.map == 0:
+        activity_data = (
+            {k: v for k, v in a.items() if k != "map"} for a in activity_data
+        )
+
+    activity_data = list(activity_data)
+    return activity_data
 
 
 def main():
@@ -115,47 +178,51 @@ def main():
         "--output",
         required=False,
         default="",
-        help="handle to output file to write JSON to",
+        help="handle to output file to write JSON or image to",
+    )
+    parser.add_argument(
+        "-iw",
+        "--width",
+        required=False,
+        type=int,
+        default=800,
+        help="If writing image, the width of the image being written",
+    )
+    parser.add_argument(
+        "-ih",
+        "--height",
+        required=False,
+        type=int,
+        default=480,
+        help="If writing image, the width of the image being written",
     )
     parser.add_argument(
         "-f", "--file_type", required=False, default="json", choices=["json", "image"]
     )
     parser.add_argument("-ma", "--max_activities", required=False, default=5, type=int)
+    parser.add_argument("-p", "--primary-color", required=False, default="#2d1b64")
+    parser.add_argument("-s", "--secondary-color", required=False, default="#ffff00")
 
     args = parser.parse_args()
-    creds_data = load_credentials(args.creds)
-    try:
-        with open(TOKENS_PATH, "r") as token_file:
-            token_data = json.load(token_file)
-    except OSError:
-        token_data = get_access_token(creds_data=creds_data)
-        with open(TOKENS_PATH, "w") as out_file:
-            json.dump(token_data, out_file, sort_keys=True)
-
-    token_data = check_refresh_token(creds_data, token_data)
-
-    activity_data = get_activities(token_data)
-
-    if args.type != "All":
-        activity_data = (a for a in activity_data if a["type"] == args.type)
-
-    if args.map == 0:
-        activity_data = (
-            {k: v for k, v in a.items() if k != "map"} for a in activity_data
-        )
-
     if args.output:
         result_file = open(args.output, "w")
     else:
         result_file = sys.stdout
 
-    activity_data = list(activity_data)
-
+    colors = (args.primary_color, args.secondary_color)
+    token_data = get_strava_token(args)
+    activity_data = get_activity_data(args, token_data)
     match args.file_type:
         case "json":
-            print(json.dumps(activity_data, sort_keys=True), file=result_file)
+            json.dump(activity_data, file=result_file, sort_keys=True)
         case "image":
-            image_from_activity_data(activity_data, args.max_activities, result_file)
+            image_from_activity_data(
+                activity_data,
+                args.max_activities,
+                result_file,
+                (args.width, args.height),
+                colors,
+            )
 
 
 if __name__ == "__main__":

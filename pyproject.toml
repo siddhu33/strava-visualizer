@@ -18,7 +18,17 @@ dependencies = [
     "pillow",
     "requests",
     'importlib-metadata; python_version<"3.8"',
+    "matplotlib",
+    "humanize"
 ]
+version = "0.0.1"
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pytest-mock",
+    "pytest-cov"
+]
+
 dynamic = ["version"]
 
 [project.scripts]
