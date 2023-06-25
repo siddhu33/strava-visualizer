@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 import requests
 from PIL import Image, ImageDraw, ImageFont, ImageColor
 
-from auth import get_strava_token
+from src.auth import get_strava_token
 
 ACTIVITIES_URL = "https://www.strava.com/api/v3/athlete/activities"
 
@@ -28,15 +28,30 @@ def get_activities(token_data: dict) -> list[dict]:
 def heart_rate_chart(
     activity_data: list[dict], chart_shape: tuple[int, int], colors: tuple[str, str]
 ):
-    dates, rates = [], []
+    partition = 5500
+    dates_small, rates_small = [], []
+    dates_large, rates_large = [], []
     for a in activity_data:
-        dates.append(datetime.fromisoformat(a["start_date"]))
-        rates.append(a["average_heartrate"])
+        act_date = datetime.fromisoformat(a["start_date"])
+        act_value = a["average_heartrate"]
+        if a["distance"] > partition:
+            dates_large.append(act_date)
+            rates_large.append(act_value)
+        else:
+            dates_small.append(act_date)
+            rates_small.append(act_value)
     w, h = chart_shape
     fig = plt.figure(figsize=(w / 100.0, h / 100.0), dpi=100.0)
     ax = fig.subplots(1, 1)
     ax.set_title("Average Heart Rate", fontdict={"color": colors[1]})
-    plot_chart_data(dates, rates, fig, ax, colors)
+    plot_chart_data(dates_small, rates_small, fig, ax, colors, f"HR<={partition}m")
+    ax.plot(
+        dates_large,
+        rates_large,
+        color=colors[1],
+        linestyle="dashed",
+        label=f"HR>{partition}m",
+    )
     return _figure_to_image(fig, colors[1])
 
 
@@ -50,28 +65,45 @@ def _figure_to_image(fig, text_color):
     )
 
 
-def plot_chart_data(x, y, fig, ax, colors):
+def plot_chart_data(x, y, fig, ax, colors, label):
     primary, secondary = colors
     fig.set_facecolor(primary)
     ax.set_facecolor(primary)
     ax.xaxis.label.set_color(secondary)
     ax.yaxis.label.set_color(secondary)
     ax.tick_params(colors=secondary, which="both")
-    ax.plot(x, y, color=secondary)
+    ax.plot(x, y, color=secondary, label=label)
 
 
 def pace_chart(
     activity_data: list[dict], chart_shape: tuple[int, int], colors: tuple[str, str]
 ):
-    dates, paces = [], []
+    partition = 5500
+    dates_small, paces_small = [], []
+    dates_large, paces_large = [], []
     for a in activity_data:
-        dates.append(datetime.fromisoformat(a["start_date"]))
-        paces.append(a["average_speed"] * 3.6)
+        act_date = datetime.fromisoformat(a["start_date"])
+        act_value = a["average_speed"] * 3.6
+        if a["distance"] > partition:
+            dates_large.append(act_date)
+            paces_large.append(act_value)
+        else:
+            dates_small.append(act_date)
+            paces_small.append(act_value)
     w, h = chart_shape
     fig = plt.figure(figsize=(w / 100.0, h / 100.0), dpi=100.0)
     ax = fig.subplots(1, 1)
-    plot_chart_data(dates, paces, fig, ax, colors)
+    plot_chart_data(
+        dates_small, paces_small, fig, ax, colors, f"pace under {partition}m"
+    )
     ax.set_title("Running Pace", fontdict={"color": colors[1]})
+    ax.plot(
+        dates_large,
+        paces_large,
+        color=colors[1],
+        linestyle="dashed",
+        label=f"pace over {partition}m",
+    )
     return _figure_to_image(fig, colors[1])
 
 
@@ -99,9 +131,9 @@ def image_from_activity_data(
     activities = activity_data[:max_activities]
     box_shape = w / 2, (h / len(activities))
     context = ImageDraw.Draw(image)
-    heading = ImageFont.truetype("Futura", size=16)
-    subheading = ImageFont.truetype("Futura", size=14)
-    content = ImageFont.truetype("Futura", size=12)
+    heading = ImageFont.truetype("Futura", size=18)
+    subheading = ImageFont.truetype("Futura", size=16)
+    content = ImageFont.truetype("Futura", size=14)
     text_color = auto_text_color(primary=primary)
     for idx, act in enumerate(activities):
         context.rectangle(
@@ -212,7 +244,6 @@ def main():
     parser.add_argument("-ma", "--max_activities", required=False, default=5, type=int)
     parser.add_argument("-p", "--primary-color", required=False, default="#2d1b64")
     parser.add_argument("-s", "--secondary-color", required=False, default="#ffff00")
-
     args = parser.parse_args()
     if args.output:
         result_file = open(args.output, "w")
