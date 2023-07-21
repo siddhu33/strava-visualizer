@@ -62,4 +62,8 @@ options:
   -ma MAX_ACTIVITIES, --max_activities MAX_ACTIVITIES
   -p PRIMARY_COLOR, --primary-color PRIMARY_COLOR
   -s SECONDARY_COLOR, --secondary-color SECONDARY_COLOR
+
+# An example of how to run the script to generate a sample image is shown below:
+
+python3 main.py -t Run -f image -o test.jpg
 ```
