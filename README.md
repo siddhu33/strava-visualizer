@@ -35,6 +35,7 @@ code = "{YOUR_AUTH_CODE}"
 
 The script will use the tokens in `tokens.json` to auth or re-authenticate itself if the access token has expired.
 
+You can look at Strava's own [documentation](https://developers.strava.com/docs/getting-started/) to find out how to get a client id/secret.
 ## Shell Args
 
 ```shell
