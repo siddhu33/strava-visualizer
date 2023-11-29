@@ -61,7 +61,7 @@ def _figure_to_image(fig, text_color):
         fig.tight_layout()
         fig.canvas.draw()
     return Image.frombytes(
-        "RGB", fig.canvas.get_width_height(), fig.canvas.tostring_rgb()
+        "RGBA", fig.canvas.get_width_height(), fig.canvas.renderer.buffer_rgba()
     )
 
 
