@@ -117,6 +117,24 @@ def auto_text_color(primary):
     return "#000000" if (a < 0.5) else "#ffffff"
 
 
+def select_random_color_palette():
+    import colorsys
+    import random
+
+    def to_8_bit(c):
+        return int(255 * c)
+
+    hue = random.randint(1, 12) / 12.0
+    complementary_hue = 1.0 - hue
+    p_red, p_green, p_blue = [to_8_bit(c) for c in colorsys.hsv_to_rgb(hue, 1.0, 0.5)]
+    s_red, s_green, s_blue = [
+        to_8_bit(c) for c in colorsys.hsv_to_rgb(complementary_hue, 1.0, 0.5)
+    ]
+    primary_rgb_str = f"#{p_red:02x}{p_green:02x}{p_blue:02x}"
+    secondary_rgb_str = f"#{s_red:02x}{s_green:02x}{s_blue:02x}"
+    return primary_rgb_str, secondary_rgb_str
+
+
 def image_from_activity_data(
     activity_data: list[dict],
     max_activities: int,
@@ -242,15 +260,18 @@ def main():
         "-f", "--file_type", required=False, default="json", choices=["json", "image"]
     )
     parser.add_argument("-ma", "--max_activities", required=False, default=5, type=int)
-    parser.add_argument("-p", "--primary-color", required=False, default="#2d1b64")
-    parser.add_argument("-s", "--secondary-color", required=False, default="#ffff00")
+    parser.add_argument("-p", "--primary-color", required=False, default=None)
+    parser.add_argument("-s", "--secondary-color", required=False, default=None)
     args = parser.parse_args()
     if args.output:
         result_file = open(args.output, "w")
     else:
         result_file = sys.stdout
 
-    colors = (args.primary_color, args.secondary_color)
+    if not args.primary_color and not args.secondary_color:
+        colors = select_random_color_palette()
+    else:
+        colors = (args.primary_color, args.secondary_color)
     token_data = get_strava_token(args)
     activity_data = get_activity_data(args, token_data)
     match args.file_type:
