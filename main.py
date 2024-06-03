@@ -126,9 +126,9 @@ def select_random_color_palette():
 
     hue = random.randint(1, 12) / 12.0
     complementary_hue = 1.0 - hue
-    p_red, p_green, p_blue = [to_8_bit(c) for c in colorsys.hsv_to_rgb(hue, 1.0, 0.5)]
+    p_red, p_green, p_blue = [to_8_bit(c) for c in colorsys.hsv_to_rgb(hue, 1.0, 1.0)]
     s_red, s_green, s_blue = [
-        to_8_bit(c) for c in colorsys.hsv_to_rgb(complementary_hue, 1.0, 0.5)
+        to_8_bit(c) for c in colorsys.hsv_to_rgb(complementary_hue, 1.0, 1.0)
     ]
     primary_rgb_str = f"#{p_red:02x}{p_green:02x}{p_blue:02x}"
     secondary_rgb_str = f"#{s_red:02x}{s_green:02x}{s_blue:02x}"
