@@ -6,14 +6,14 @@ from datetime import datetime, timedelta
 import matplotlib
 from humanize import precisedelta
 
-matplotlib.use("Agg")
-matplotlib.rcParams["font.family"] = ["Futura"]
-
 import matplotlib.pyplot as plt
 import requests
 from PIL import Image, ImageDraw, ImageFont, ImageColor
 
 from src.auth import get_strava_token
+
+matplotlib.use("Agg")
+matplotlib.rcParams["font.family"] = ["Futura"]
 
 ACTIVITIES_URL = "https://www.strava.com/api/v3/athlete/activities"
 
