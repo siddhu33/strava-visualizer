@@ -1,19 +1,12 @@
-import json
 from unittest.mock import patch
 from PIL import Image
-from io import StringIO
 import pytest
 from main import (
     get_activities,
     heart_rate_chart,
     pace_chart,
-    _figure_to_image,
-    plot_chart_data,
     _elapsed_str,
     auto_text_color,
-    image_from_activity_data,
-    get_activity_data,
-    main,
     select_random_color_palette,
 )
 

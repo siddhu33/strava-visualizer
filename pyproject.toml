@@ -4,30 +4,22 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "strava-visualizer"
-authors = [
-    {name = "Siddharth Vasu", email = "siddharth_vasu@hotmail.co.uk"},
-]
+authors = [{ name = "Siddharth Vasu", email = "siddharth_vasu@hotmail.co.uk" }]
 description = "Get strava data and convert it into a nice looking image!"
 readme = "README.md"
 requires-python = ">=3.10"
-license = {text = "MIT"}
-classifiers = [
-    "Programming Language :: Python :: 3",
-]
+license = { text = "MIT" }
+classifiers = ["Programming Language :: Python :: 3"]
 dependencies = [
     "pillow",
     "requests",
     'importlib-metadata; python_version<"3.8"',
     "matplotlib",
-    "humanize"
+    "humanize",
 ]
 version = "0.0.1"
 [project.optional-dependencies]
-dev = [
-    "pytest",
-    "pytest-mock",
-    "pytest-cov"
-]
+dev = ["ruff", "pytest", "pytest-mock", "pytest-cov"]
 
 dynamic = ["version"]
 
