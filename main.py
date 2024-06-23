@@ -232,7 +232,7 @@ def image_from_activity_data(
     image = image.resize(
         (w // supersampling, h // supersampling), resample=Image.Resampling.LANCZOS
     )
-    image.save(result_file, format="jpeg")
+    image.save(result_file)
 
 
 def get_activity_data(args, token_data):
