@@ -107,20 +107,20 @@ def pace_chart(
     return _figure_to_image(fig, colors[1])
 
 
-def pace_ratio_chart(
+def metres_per_beat_chart(
     activity_data: list[dict], chart_shape: tuple[int, int], colors: tuple[str, str]
 ):
     dates, pace_ratios = [], []
     for a in activity_data:
         act_date = datetime.fromisoformat(a["start_date"])
-        act_value = a["average_speed"] * 3.6 / a["average_heartrate"]
+        act_value = a["average_heartrate"] / (a["average_speed"] * 60)
         dates.append(act_date)
         pace_ratios.append(act_value)
     w, h = chart_shape
     fig = plt.figure(figsize=(w / 100.0, h / 100.0), dpi=100.0)
     ax = fig.subplots(1, 1)
     plot_chart_data(dates, pace_ratios, fig, ax, colors, f"pace ratio")
-    ax.set_title("Heart Rate Ratio", fontdict={"color": colors[1]})
+    ax.set_title("Metres per heartbeat", fontdict={"color": colors[1]})
     return _figure_to_image(fig, colors[1])
 
 
@@ -141,7 +141,7 @@ def select_random_color_palette():
     def to_8_bit(c):
         return int(255 * c)
 
-    hue = random.random()
+    hue = random.randint(1, 12) / 12.0
     complementary_hue = (hue + 0.5) % 1
     p_red, p_green, p_blue = [to_8_bit(c) for c in colorsys.hsv_to_rgb(hue, 1.0, 1.0)]
     s_red, s_green, s_blue = [
@@ -201,7 +201,7 @@ def image_from_activity_data(
     chart_data = []  # two charts, heart rate and distance
     chart_data.append(heart_rate_chart(activity_data, chart_shape, colors))
     chart_data.append(pace_chart(activity_data, chart_shape, colors))
-    chart_data.append(pace_ratio_chart(activity_data, chart_shape, colors))
+    chart_data.append(metres_per_beat_chart(activity_data, chart_shape, colors))
     for idx in range(num_charts):
         context.rectangle(
             (w / 2, idx * (h / num_charts), w, idx * (h / num_charts)), outline="red"
