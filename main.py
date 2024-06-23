@@ -2,7 +2,7 @@ import argparse
 import json
 import sys
 from datetime import datetime, timedelta
-
+from typing import IO
 import matplotlib
 from humanize import precisedelta
 
@@ -167,7 +167,7 @@ def select_random_color_palette():
 def image_from_activity_data(
     activity_data: list[dict],
     max_activities: int,
-    result_file,
+    result_file: str | IO,
     shape: tuple[int, int],
     colors: tuple[str, str],
     supersampling: int = 1,
@@ -232,7 +232,8 @@ def image_from_activity_data(
     image = image.resize(
         (w // supersampling, h // supersampling), resample=Image.Resampling.LANCZOS
     )
-    image.save(result_file)
+    file_format = None if isinstance(result_file, str) else "jpeg"
+    image.save(result_file, format=file_format)
 
 
 def get_activity_data(args, token_data):

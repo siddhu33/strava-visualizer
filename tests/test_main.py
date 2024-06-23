@@ -1,3 +1,5 @@
+import io
+
 from unittest.mock import patch
 
 import pytest
@@ -8,6 +10,7 @@ from main import (
     auto_text_color,
     get_activities,
     heart_rate_chart,
+    image_from_activity_data,
     metres_per_beat_chart,
     pace_chart,
     select_random_color_palette,
@@ -107,3 +110,25 @@ def test_select_random_color_palette():
     p, s = select_random_color_palette()
     assert isinstance(p, str)
     assert isinstance(s, str)
+
+
+def test_image_from_activity_data():
+    open_file = io.BytesIO()
+    image_from_activity_data(
+        [
+            {
+                "start_date": "2022-01-01",
+                "start_date_local": "2022-01-01",
+                "name": "Test Run",
+                "elapsed_time": 1800,
+                "distance": 5000,
+                "average_speed": 5,
+                "average_heartrate": 180,
+            }
+        ],
+        1,
+        open_file,
+        (800, 480),
+        ("#ff0000", "#0000ff"),
+    )
+    assert open_file.getbuffer().nbytes > 0
