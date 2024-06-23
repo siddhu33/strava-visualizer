@@ -181,9 +181,7 @@ def image_from_activity_data(
     activities = activity_data[:max_activities]
     box_shape = w / 2, (h / len(activities))
     context = ImageDraw.Draw(image)
-    heading = ImageFont.truetype("Futura", size=18 * supersampling)
-    subheading = ImageFont.truetype("Futura", size=16 * supersampling)
-    content = ImageFont.truetype("Futura", size=14 * supersampling)
+    heading, subheading, content = get_fonts(supersampling)
     text_color = auto_text_color(primary=primary)
     for idx, act in enumerate(activities):
         context.rectangle(
@@ -234,6 +232,13 @@ def image_from_activity_data(
     )
     file_format = None if isinstance(result_file, str) else "jpeg"
     image.save(result_file, format=file_format)
+
+
+def get_fonts(supersampling):
+    heading = ImageFont.truetype("Futura", size=18 * supersampling)
+    subheading = ImageFont.truetype("Futura", size=16 * supersampling)
+    content = ImageFont.truetype("Futura", size=14 * supersampling)
+    return heading, subheading, content
 
 
 def get_activity_data(args, token_data):

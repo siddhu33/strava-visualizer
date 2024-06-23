@@ -3,7 +3,7 @@ import io
 from unittest.mock import patch
 
 import pytest
-from PIL import Image
+from PIL import Image, ImageFont
 
 from main import (
     _elapsed_str,
@@ -114,21 +114,27 @@ def test_select_random_color_palette():
 
 def test_image_from_activity_data():
     open_file = io.BytesIO()
-    image_from_activity_data(
-        [
-            {
-                "start_date": "2022-01-01",
-                "start_date_local": "2022-01-01",
-                "name": "Test Run",
-                "elapsed_time": 1800,
-                "distance": 5000,
-                "average_speed": 5,
-                "average_heartrate": 180,
-            }
-        ],
-        1,
-        open_file,
-        (800, 480),
-        ("#ff0000", "#0000ff"),
+    mock_font_return = (
+        ImageFont.load_default(),
+        ImageFont.load_default(),
+        ImageFont.load_default(),
     )
+    with patch("main.get_fonts", return_value=mock_font_return):
+        image_from_activity_data(
+            [
+                {
+                    "start_date": "2022-01-01",
+                    "start_date_local": "2022-01-01",
+                    "name": "Test Run",
+                    "elapsed_time": 1800,
+                    "distance": 5000,
+                    "average_speed": 5,
+                    "average_heartrate": 180,
+                }
+            ],
+            1,
+            open_file,
+            (800, 480),
+            ("#ff0000", "#0000ff"),
+        )
     assert open_file.getbuffer().nbytes > 0
