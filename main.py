@@ -302,7 +302,7 @@ def main():
     parser.add_argument("-ma", "--max_activities", required=False, default=5, type=int)
     parser.add_argument("-p", "--primary-color", required=False, default=None)
     parser.add_argument("-s", "--secondary-color", required=False, default=None)
-    parser.add_argument("-ss", "--supersampling", required=False, default=1)
+    parser.add_argument("-ss", "--supersampling", required=False, type=int, default=1)
     args = parser.parse_args()
     if args.output:
         result_file = args.output
