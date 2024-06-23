@@ -15,7 +15,7 @@ from src.auth import get_strava_token
 matplotlib.use("Agg")
 matplotlib.rcParams["font.family"] = ["Futura"]
 
-ACTIVITIES_URL = "https://www.strava.com/api/v3/athlete/activities"
+ACTIVITIES_URL = "https://www.strava.com/api/v3/athlete/activities?per_page=50"
 
 
 def get_activities(token_data: dict) -> list[dict]:
@@ -177,6 +177,7 @@ def image_from_activity_data(
     w, h = shape
     w = w * supersampling
     h = h * supersampling
+    print(f"Supersampling: {(w,h,supersampling)}")
     image = Image.new("RGB", (int(w), int(h)), color=primary)
     activities = activity_data[:max_activities]
     box_shape = w / 2, (h / len(activities))
@@ -235,9 +236,10 @@ def image_from_activity_data(
 
 
 def get_fonts(supersampling):
-    heading = ImageFont.truetype("Futura", size=18 * supersampling)
-    subheading = ImageFont.truetype("Futura", size=16 * supersampling)
-    content = ImageFont.truetype("Futura", size=14 * supersampling)
+    path = "/home/rpi5/futura/futura medium bt.ttf"
+    heading = ImageFont.truetype(path, size=18 * supersampling)
+    subheading = ImageFont.truetype(path, size=16 * supersampling)
+    content = ImageFont.truetype(path, size=14 * supersampling)
     return heading, subheading, content
 
 
@@ -329,7 +331,7 @@ def main():
                 activity_data,
                 args.max_activities,
                 result_file,
-                (args.width, args.height),
+                (int(args.width), int(args.height)),
                 colors,
                 args.supersampling,
             )
