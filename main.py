@@ -119,7 +119,7 @@ def metres_per_beat_chart(
     w, h = chart_shape
     fig = plt.figure(figsize=(w / 100.0, h / 100.0), dpi=100.0)
     ax = fig.subplots(1, 1)
-    plot_chart_data(dates, pace_ratios, fig, ax, colors, f"pace ratio")
+    plot_chart_data(dates, pace_ratios, fig, ax, colors, "m per heartbeat")
     ax.set_title("Metres per heartbeat", fontdict={"color": colors[1]})
     return _figure_to_image(fig, colors[1])
 
