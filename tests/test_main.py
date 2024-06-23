@@ -1,12 +1,15 @@
 from unittest.mock import patch
-from PIL import Image
+
 import pytest
+from PIL import Image
+
 from main import (
-    get_activities,
-    heart_rate_chart,
-    pace_chart,
     _elapsed_str,
     auto_text_color,
+    get_activities,
+    heart_rate_chart,
+    metres_per_beat_chart,
+    pace_chart,
     select_random_color_palette,
 )
 
@@ -50,7 +53,7 @@ def test_heart_rate_chart():
     chart_shape = (800, 480)
     colors = ("#2d1b64", "#ffff00")
 
-    result = heart_rate_chart(activity_data, chart_shape, colors)
+    result = heart_rate_chart(activity_data, chart_shape, colors, 1)
 
     assert isinstance(result, Image.Image)
 
@@ -61,7 +64,25 @@ def test_pace_chart():
     chart_shape = (800, 480)
     colors = ("#2d1b64", "#ffff00")
 
-    result = pace_chart(activity_data, chart_shape, colors)
+    result = pace_chart(activity_data, chart_shape, colors, 2)
+
+    assert isinstance(result, Image.Image)
+
+
+def test_metres_per_beat_chart():
+    # Replace with sample data for testing
+    activity_data = [
+        {
+            "start_date": "2022-01-01",
+            "distance": 5000,
+            "average_speed": 5,
+            "average_heartrate": 180,
+        }
+    ]
+    chart_shape = (800, 480)
+    colors = ("#2d1b64", "#ffff00")
+
+    result = metres_per_beat_chart(activity_data, chart_shape, colors, 3)
 
     assert isinstance(result, Image.Image)
 
