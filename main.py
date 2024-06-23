@@ -7,6 +7,7 @@ import matplotlib
 from humanize import precisedelta
 
 import matplotlib.pyplot as plt
+import random
 import requests
 from PIL import Image, ImageDraw, ImageFont, ImageColor
 
@@ -145,15 +146,18 @@ def auto_text_color(primary):
     a = 1 - (0.299 * r + 0.587 * g + 0.114 * b) / 255
     return "#000000" if (a < 0.5) else "#ffffff"
 
+def get_eink_hue():
+    """pick one out of red, green, blue, yellow, orange"""
+    hues = [0.0, 1.0/3, 2.0/3, 1.0/6, 1.0/9]
+    return random.choice(hues)
 
 def select_random_color_palette():
     import colorsys
-    import random
 
     def to_8_bit(c):
         return int(255 * c)
 
-    hue = random.randint(1, 12) / 12.0
+    hue = get_eink_hue()
     complementary_hue = (hue + 0.5) % 1
     p_red, p_green, p_blue = [to_8_bit(c) for c in colorsys.hsv_to_rgb(hue, 1.0, 1.0)]
     s_red, s_green, s_blue = [
