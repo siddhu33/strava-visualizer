@@ -113,7 +113,7 @@ def metres_per_beat_chart(
     dates, pace_ratios = [], []
     for a in activity_data:
         act_date = datetime.fromisoformat(a["start_date"])
-        act_value = a["average_heartrate"] / (a["average_speed"] * 60)
+        act_value = (a["average_speed"] * 60) / a["average_heartrate"]
         dates.append(act_date)
         pace_ratios.append(act_value)
     w, h = chart_shape
