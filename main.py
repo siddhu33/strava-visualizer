@@ -26,7 +26,10 @@ def get_activities(token_data: dict) -> list[dict]:
 
 
 def heart_rate_chart(
-    activity_data: list[dict], chart_shape: tuple[int, int], colors: tuple[str, str]
+    activity_data: list[dict],
+    chart_shape: tuple[int, int],
+    colors: tuple[str, str],
+    supersampling: int,
 ):
     partition = 5500
     dates_small, rates_small = [], []
@@ -41,7 +44,8 @@ def heart_rate_chart(
             dates_small.append(act_date)
             rates_small.append(act_value)
     w, h = chart_shape
-    fig = plt.figure(figsize=(w / 100.0, h / 100.0), dpi=100.0)
+    dpi = 100.0 * supersampling
+    fig = plt.figure(figsize=(w / dpi, h / dpi), dpi=dpi)
     ax = fig.subplots(1, 1)
     ax.set_title("Average Heart Rate", fontdict={"color": colors[1]})
     plot_chart_data(dates_small, rates_small, fig, ax, colors, f"HR<={partition}m")
@@ -76,7 +80,10 @@ def plot_chart_data(x, y, fig, ax, colors, label):
 
 
 def pace_chart(
-    activity_data: list[dict], chart_shape: tuple[int, int], colors: tuple[str, str]
+    activity_data: list[dict],
+    chart_shape: tuple[int, int],
+    colors: tuple[str, str],
+    supersampling: int,
 ):
     partition = 5500
     dates_small, paces_small = [], []
@@ -91,7 +98,8 @@ def pace_chart(
             dates_small.append(act_date)
             paces_small.append(act_value)
     w, h = chart_shape
-    fig = plt.figure(figsize=(w / 100.0, h / 100.0), dpi=100.0)
+    dpi = 100.0 * supersampling
+    fig = plt.figure(figsize=(w / dpi, h / dpi), dpi=dpi)
     ax = fig.subplots(1, 1)
     plot_chart_data(
         dates_small, paces_small, fig, ax, colors, f"pace under {partition}m"
@@ -108,7 +116,10 @@ def pace_chart(
 
 
 def metres_per_beat_chart(
-    activity_data: list[dict], chart_shape: tuple[int, int], colors: tuple[str, str]
+    activity_data: list[dict],
+    chart_shape: tuple[int, int],
+    colors: tuple[str, str],
+    supersampling: int,
 ):
     dates, pace_ratios = [], []
     for a in activity_data:
@@ -117,7 +128,8 @@ def metres_per_beat_chart(
         dates.append(act_date)
         pace_ratios.append(act_value)
     w, h = chart_shape
-    fig = plt.figure(figsize=(w / 100.0, h / 100.0), dpi=100.0)
+    dpi = 100.0 * supersampling
+    fig = plt.figure(figsize=(w / dpi, h / dpi), dpi=dpi)
     ax = fig.subplots(1, 1)
     plot_chart_data(dates, pace_ratios, fig, ax, colors, "m per heartbeat")
     ax.set_title("Metres per heartbeat", fontdict={"color": colors[1]})
@@ -158,17 +170,20 @@ def image_from_activity_data(
     result_file,
     shape: tuple[int, int],
     colors: tuple[str, str],
+    supersampling: int = 1,
 ) -> None:
     """create an image from the activity data and then write it out to an image"""
     primary, secondary = colors
     w, h = shape
-    image = Image.new("RGB", shape, color=primary)
+    w = w * supersampling
+    h = h * supersampling
+    image = Image.new("RGB", (int(w), int(h)), color=primary)
     activities = activity_data[:max_activities]
     box_shape = w / 2, (h / len(activities))
     context = ImageDraw.Draw(image)
-    heading = ImageFont.truetype("Futura", size=18)
-    subheading = ImageFont.truetype("Futura", size=16)
-    content = ImageFont.truetype("Futura", size=14)
+    heading = ImageFont.truetype("Futura", size=18 * supersampling)
+    subheading = ImageFont.truetype("Futura", size=16 * supersampling)
+    content = ImageFont.truetype("Futura", size=14 * supersampling)
     text_color = auto_text_color(primary=primary)
     for idx, act in enumerate(activities):
         context.rectangle(
@@ -185,13 +200,13 @@ def image_from_activity_data(
             fill=secondary,
         )
         context.text(
-            (10, 20 + idx * box_shape[1]),
+            (10, supersampling * 20 + idx * box_shape[1]),
             f"Elapsed Time: {_elapsed_str(act['elapsed_time'])}",
             font=subheading,
             fill=text_color,
         )
         context.text(
-            (10, 40 + idx * box_shape[1]),
+            (10, supersampling * 40 + idx * box_shape[1]),
             f"Distance: {act['distance']}m, Heart Rate: {act['average_heartrate']}, Pace: {pace_str}",
             font=content,
             fill=text_color,
@@ -199,9 +214,13 @@ def image_from_activity_data(
     num_charts = 3
     chart_shape = (w / 2, h / num_charts)
     chart_data = []  # two charts, heart rate and distance
-    chart_data.append(heart_rate_chart(activity_data, chart_shape, colors))
-    chart_data.append(pace_chart(activity_data, chart_shape, colors))
-    chart_data.append(metres_per_beat_chart(activity_data, chart_shape, colors))
+    chart_data.append(
+        heart_rate_chart(activity_data, chart_shape, colors, supersampling)
+    )
+    chart_data.append(pace_chart(activity_data, chart_shape, colors, supersampling))
+    chart_data.append(
+        metres_per_beat_chart(activity_data, chart_shape, colors, supersampling)
+    )
     for idx in range(num_charts):
         context.rectangle(
             (w / 2, idx * (h / num_charts), w, idx * (h / num_charts)), outline="red"
@@ -210,6 +229,9 @@ def image_from_activity_data(
         box = [int(i) for i in box]
         image.paste(chart_data[idx], box=box)
 
+    image = image.resize(
+        (w // supersampling, h // supersampling), resample=Image.Resampling.LANCZOS
+    )
     image.save(result_file, format="jpeg")
 
 
@@ -280,9 +302,10 @@ def main():
     parser.add_argument("-ma", "--max_activities", required=False, default=5, type=int)
     parser.add_argument("-p", "--primary-color", required=False, default=None)
     parser.add_argument("-s", "--secondary-color", required=False, default=None)
+    parser.add_argument("-ss", "--supersampling", required=False, default=1)
     args = parser.parse_args()
     if args.output:
-        result_file = open(args.output, "w")
+        result_file = args.output
     else:
         result_file = sys.stdout
 
@@ -302,6 +325,7 @@ def main():
                 result_file,
                 (args.width, args.height),
                 colors,
+                args.supersampling,
             )
 
 
