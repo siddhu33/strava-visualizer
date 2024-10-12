@@ -252,8 +252,7 @@ def get_activity_data(args, token_data):
             {k: v for k, v in a.items() if k != "map"} for a in activity_data
         )
 
-    activity_data = list(activity_data)
-    return activity_data
+    return [a for a in activity_data if a.get("has_heartrate")]
 
 
 def main():
