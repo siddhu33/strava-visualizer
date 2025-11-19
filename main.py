@@ -3,12 +3,12 @@ import json
 import sys
 from datetime import datetime, timedelta
 from typing import IO
-import matplotlib
-from humanize import precisedelta
 
+import matplotlib
 import matplotlib.pyplot as plt
 import requests
-from PIL import Image, ImageDraw, ImageFont, ImageColor
+from humanize import precisedelta
+from PIL import Image, ImageColor, ImageDraw, ImageFont
 
 from src.auth import get_strava_token
 
@@ -27,7 +27,7 @@ def get_activities(token_data: dict) -> list[dict]:
 
 def heart_rate_chart(
     activity_data: list[dict],
-    chart_shape: tuple[int, int],
+    chart_shape: tuple[int | float, int | float],
     colors: tuple[str, str],
     supersampling: int,
 ):
@@ -190,7 +190,7 @@ def image_from_activity_data(
         run_date_str = datetime.fromisoformat(act["start_date_local"]).strftime(
             "%Y-%m-%d %H:%M:%S"
         )
-        pace_str = f"{act['average_speed']*3.6:.2f}km/h"
+        pace_str = f"{act['average_speed'] * 3.6:.2f}km/h"
         context.text(
             (10, idx * box_shape[1]),
             f"{act['name']}: {run_date_str}",
