@@ -81,7 +81,7 @@ def plot_chart_data(x, y, fig, ax, colors, label):
 
 def pace_chart(
     activity_data: list[dict],
-    chart_shape: tuple[int, int],
+    chart_shape: tuple[int | float, int | float],
     colors: tuple[str, str],
     supersampling: int,
 ):
@@ -117,7 +117,7 @@ def pace_chart(
 
 def metres_per_beat_chart(
     activity_data: list[dict],
-    chart_shape: tuple[int, int],
+    chart_shape: tuple[int | float, int | float],
     colors: tuple[str, str],
     supersampling: int,
 ):
@@ -141,8 +141,8 @@ def _elapsed_str(num_seconds: int):
 
 
 def auto_text_color(primary):
-    r, g, b = ImageColor.getrgb(primary)
-    a = 1 - (0.299 * r + 0.587 * g + 0.114 * b) / 255
+    color = ImageColor.getrgb(primary)
+    a = 1 - (0.299 * color[0] + 0.587 * color[1] + 0.114 * color[2]) / 255
     return "#000000" if (a < 0.5) else "#ffffff"
 
 
@@ -322,7 +322,7 @@ def main():
     activity_data = get_activity_data(args, token_data)
     match args.file_type:
         case "json":
-            json.dump(activity_data, file=result_file, sort_keys=True)
+            json.dump(activity_data, fp=result_file, sort_keys=True)
         case "image":
             image_from_activity_data(
                 activity_data,
