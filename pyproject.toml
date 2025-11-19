@@ -7,7 +7,7 @@ name = "strava-visualizer"
 authors = [{ name = "Siddharth Vasu", email = "siddharth_vasu@hotmail.co.uk" }]
 description = "Get strava data and convert it into a nice looking image!"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.14"
 license = { text = "MIT" }
 classifiers = ["Programming Language :: Python :: 3"]
 dependencies = [
@@ -20,8 +20,6 @@ dependencies = [
 version = "0.0.1"
 [project.optional-dependencies]
 dev = ["ruff", "pytest", "pytest-mock", "pytest-cov"]
-
-dynamic = ["version"]
 
 [project.scripts]
 main = "main.py:main"
